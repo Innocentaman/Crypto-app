@@ -9,7 +9,11 @@ const COINGECKO_API = 'https://api.coingecko.com/api/v3/simple/price?ids=';
 const fetchCryptoData = async () => {
   const coins = ['bitcoin', 'matic-network', 'ethereum'];
   try {
-    const response = await axios.get(`${COINGECKO_API}${coins.join(',')}&vs_currencies=usd&include_market_cap=true&include_24hr_change=true`);
+    const response = await axios.get(`${COINGECKO_API}${coins.join(',')}&vs_currencies=usd&include_market_cap=true&include_24hr_change=true`,{
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+  });
     return response.data;
   } catch (error) {
     console.error("Error fetching data from CoinGecko:", error);
