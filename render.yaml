@@ -3,7 +3,7 @@ services:
     name: crypto-app
     env: node
     buildCommand: "npm install"
-    startCommand: "node app.js" # Or your entry file
+    startCommand: "node index.js" # Or your entry file
     plan: free
     envVars:
       - key: NODE_ENV
