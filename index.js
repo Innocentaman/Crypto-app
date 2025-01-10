@@ -126,7 +126,7 @@ app.get('/stats', async (req, res) => {
   
   
 
-cron.schedule('*/10 * * * * *', async () => {
+cron.schedule('0 */2 * * *', async () => {
     await storeCryptoData();
   });
  //*/10 * * * * * 
