@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cryptocurrency Stats</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      color: #333;
+      overflow-y: auto; /* Enable vertical scrolling */
+    }
+    h1 {
+      text-align: center;
+      color: #007bff;
+    }
+    .table-container {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px; /* Limit the width of each table */
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
+    }
+    .coin-title {
+      text-align: center;
+      margin-bottom: 10px;
+      font-size: 1.2em;
+      color: #007bff;
+    }
+    .scroll-container {
+      max-height: 70vh; /* Adjust the height for scrolling */
+      overflow-y: auto; /* Add vertical scroll if needed */
+    }
+  </style>
+</head>
+<body>
+  <h1>Latest Cryptocurrency Data</h1>
+  <div class="scroll-container">
+    <% Object.keys(cryptoData).forEach(coin => { %>
+      <div class="table-container">
+        <div class="coin-title"><%= coin.charAt(0).toUpperCase() + coin.slice(1).replace('-', ' ') %></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Price (USD)</th>
+              <th>Market Cap (USD)</th>
+              <th>24h Change (%)</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (cryptoData[coin].length > 0) { %>
+              <% cryptoData[coin].forEach(record => { %>
+                <tr>
+                  <td><%= record.price.toFixed(2) %></td>
+                  <td><%= record.marketCap.toFixed(2) %></td>
+                  <td><%= record.change24h.toFixed(2) %></td>
+                  <td><%= new Date(record.timestamp).toLocaleString() %></td>
+                </tr>
+              <% }) %>
+            <% } else { %>
+              <tr>
+                <td colspan="4">No data available</td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    <% }) %>
+  </div>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cryptocurrency Price Deviation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      max-width: 600px;
+      margin: 50px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      text-align: center;
+    }
+    h1 {
+      color: #007bff;
+    }
+    p {
+      font-size: 1.2em;
+      margin: 10px 0;
+    }
+    .highlight {
+      font-weight: bold;
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Price Deviation for <%= coin %></h1>
+    <p>
+      Standard Deviation: <span class="highlight"><%= deviation %></span>
+    </p>
+    <p>
+      Records Analyzed: <span class="highlight"><%= records %></span>
+    </p>
+  </div>
+</body>
+</html>
