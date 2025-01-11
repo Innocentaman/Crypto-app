@@ -133,7 +133,7 @@ app.get('/stats', async (req, res) => {
   //     console.error('Error in scheduled job:', error);
   //   }
   // });
-cron.schedule('*/10 * * * * * ', async () => {
+cron.schedule('*/5 * * * * ', async () => {
     await storeCryptoData();
   });
  //*/10 * * * * * 
