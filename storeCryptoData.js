@@ -95,97 +95,112 @@
 const axios = require('axios');
 const CryptoData = require('./models/CryptoData');
 
-const COINGECKO_API = process.env.COINGECKO_API || 'https://api.coingecko.com/api/v3/simple/price?ids=';
+// Use a different endpoint that's more lenient with rate limits
+const COINGECKO_API = 'https://api.coingecko.com/api/v3/coins/markets';
 
-// Add delay function
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Fetch data with retry logic
 const fetchCryptoData = async (retryCount = 0) => {
   const coins = ['bitcoin', 'matic-network', 'ethereum'];
   const maxRetries = 3;
-  const baseDelay = 2000; // 2 seconds base delay
+  const baseDelay = 5000; // Increased to 5 seconds
 
   try {
-    // Add delay before request to avoid rate limiting
-    await delay(baseDelay * (retryCount + 1));
+    // Add mandatory delay between requests
+    await delay(baseDelay + (retryCount * 2000));
 
-    const response = await axios.get(
-      `${COINGECKO_API}${coins.join(',')}&vs_currencies=usd&include_market_cap=true&include_24hr_change=true`,
-      {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Connection': 'keep-alive'
-        },
-        timeout: 15000, // Increased timeout to 15 seconds
-        proxy: false // Disable proxy to prevent potential issues
-      }
-    );
+    const response = await axios.get(COINGECKO_API, {
+      params: {
+        vs_currency: 'usd',
+        ids: coins.join(','),
+        order: 'market_cap_desc',
+        sparkline: false,
+        locale: 'en'
+      },
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Origin': 'https://www.coingecko.com',
+        'Referer': 'https://www.coingecko.com/',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'sec-ch-ua': '"Not_A Brand";v="8", "Chromium";v="120"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site'
+      },
+      timeout: 30000
+    });
 
-    console.log('Data fetched successfully');
     return response.data;
 
   } catch (error) {
     console.error(`Attempt ${retryCount + 1} failed:`, error.message);
-
-    // Handle specific error cases
+    
     if (error.response?.status === 403 || error.response?.status === 429) {
       if (retryCount < maxRetries) {
-        console.log(`Rate limit hit, retrying in ${(baseDelay * (retryCount + 1)) / 1000} seconds...`);
+        const waitTime = baseDelay * (retryCount + 2);
+        console.log(`Rate limit hit, waiting ${waitTime/1000} seconds...`);
+        await delay(waitTime);
         return fetchCryptoData(retryCount + 1);
       }
     }
 
-    // Log detailed error information
-    if (error.response) {
-      console.error('Error Response:', {
-        status: error.response.status,
-        headers: error.response.headers,
-        data: error.response.data
-      });
-    }
-
+    // Transform the data into our required format
     return null;
   }
 };
 
 const storeCryptoData = async () => {
-  let attempts = 0;
-  const maxAttempts = 3;
-
-  while (attempts < maxAttempts) {
+  try {
     const data = await fetchCryptoData();
 
-    if (data) {
-      try {
-        const cryptoDataEntries = Object.keys(data).map(coinId => ({
-          coinId,
-          price: data[coinId].usd,
-          marketCap: data[coinId].usd_market_cap,
-          change24h: data[coinId].usd_24h_change,
-          timestamp: new Date(),
-          fetchAttempt: attempts + 1
+    if (data && Array.isArray(data)) {
+      const cryptoDataEntries = data.map(coin => ({
+        coinId: coin.id,
+        price: coin.current_price,
+        marketCap: coin.market_cap,
+        change24h: coin.price_change_percentage_24h,
+        timestamp: new Date(),
+        lastUpdated: coin.last_updated
+      }));
+
+      if (cryptoDataEntries.length > 0) {
+        // Use updateMany with upsert instead of insertMany to avoid duplicates
+        const bulkOps = cryptoDataEntries.map(entry => ({
+          updateOne: {
+            filter: { coinId: entry.coinId },
+            update: { $set: entry },
+            upsert: true
+          }
         }));
 
-        await CryptoData.insertMany(cryptoDataEntries);
-        console.log('Crypto data saved successfully!');
-        return; // Exit after successful save
-      } catch (dbError) {
-        console.error("Error saving to MongoDB:", dbError.message);
-        attempts++;
+        await CryptoData.bulkWrite(bulkOps);
+        console.log(`Successfully updated ${cryptoDataEntries.length} coins`);
       }
     } else {
-      attempts++;
-      if (attempts < maxAttempts) {
-        console.log(`Fetch failed, waiting before attempt ${attempts + 1}...`);
-        await delay(5000 * attempts); // Increasing delay between attempts
-      }
+      console.log('No valid data received from CoinGecko');
     }
+  } catch (error) {
+    console.error('Error in storeCryptoData:', error.message);
   }
-
-  console.error(`Failed to fetch and store data after ${maxAttempts} attempts`);
 };
 
-module.exports = storeCryptoData;
+// Add cache handling
+let lastFetchTime = 0;
+const CACHE_DURATION = 60000; // 1 minute
+
+const getCryptoDataWithCache = async () => {
+  const now = Date.now();
+  if (now - lastFetchTime < CACHE_DURATION) {
+    console.log('Using cached data');
+    return;
+  }
+  
+  lastFetchTime = now;
+  await storeCryptoData();
+};
+
+module.exports = getCryptoDataWithCache;
