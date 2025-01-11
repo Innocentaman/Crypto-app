@@ -133,9 +133,9 @@ app.get('/stats', async (req, res) => {
   //     console.error('Error in scheduled job:', error);
   //   }
   // });
-cron.schedule('*/5 * * * * ', async () => {
-    await storeCryptoData();
-  });
+// cron.schedule('*/10 * * * * *', async () => {
+//     await storeCryptoData();
+//   });
  //*/10 * * * * * 
 //0 */2 * * *
 // Start the server using the port from the .env file
