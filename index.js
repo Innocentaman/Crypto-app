@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const storeCryptoData = require('./storeCryptoData');
 const cron = require('node-cron');
-
+//const schedule = require('node-schedule');
 // Import the CryptoData model to interact with the database
 const CryptoData = require('./models/CryptoData');  // Ensure this path is correct
 
@@ -125,8 +125,15 @@ app.get('/stats', async (req, res) => {
   });
   
   
-
-cron.schedule('0 */2 * * *', async () => {
+  // schedule.scheduleJob('0 */2 * * *', async () => {
+  //   console.log(`Scheduled job executed at: ${new Date()}`);
+  //   try {
+  //     await storeCryptoData();
+  //   } catch (error) {
+  //     console.error('Error in scheduled job:', error);
+  //   }
+  // });
+cron.schedule('*/10 * * * * * ', async () => {
     await storeCryptoData();
   });
  //*/10 * * * * * 
